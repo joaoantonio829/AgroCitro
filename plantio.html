@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroCitro - Plantio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="Voltar">Voltar</a>
+        <div class="form-section">
+            <h2>Registrar Plantio</h2>
+            <div class="form-group">
+                <label for="variedade">Variedade</label>
+                <input type="text" id="variedade" value="Laranja Pêra" placeholder="Ex: Laranja Pêra">
+            </div>
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="quantidade">Quantidade</label>
+                    <input type="number" id="quantidade" value="1" placeholder="Ex: 100">
+                </div>
+                <div class="form-group half">
+                    <label for="dataPlantio">Data do Plantio</label>
+                    <input type="date" id="dataPlantio" value="2024-07-12">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="localizacao">Localização</label>
+                <input type="text" id="localizacao" value="Setor A" placeholder="Ex: Bloco A">
+            </div>
+            <button id="btnRegistrarPlantio" class="btn btn-primary">Registrar</button>
+        </div>
+
+        <div class="list-section">
+            <h2>Lista</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Variedade</th>
+                        <th>Quantidade</th>
+                        <th>Data de Plantio</th>
+                        <th>Localização</th>
+                    </tr>
+                </thead>
+                <tbody id="listaPlantios">
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('btnRegistrarPlantio').addEventListener('click', async () => {
+            const variedade = document.getElementById('variedade').value;
+            const quantidade = document.getElementById('quantidade').value;
+            const dataPlantio = document.getElementById('dataPlantio').value;
+            const localizacao = document.getElementById('localizacao').value;
+
+            try {
+                const response = await fetch('/adicionar-plantio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ variedade, quantidade, dataPlantio, localizacao })
+                });
+
+                if (response.ok) {
+                    alert('Plantio registrado com sucesso!');
+                    carregarPlantios();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao registrar plantio: ${errorData.msg || errorData.erro || 'Detalhes desconhecidos.'}`);
+                }
+            } catch (error) {
+                console.error('Erro de rede ou servidor:', error);
+                alert('Erro ao conectar com o servidor.');
+            }
+        });
+
+        async function carregarPlantios() {
+            try {
+                const response = await fetch('/plantio');
+                if (response.ok) {
+                    const plantios = await response.json();
+                    const listaPlantiosBody = document.getElementById('listaPlantios');
+                    listaPlantiosBody.innerHTML = '';
+
+                    let contador = 1;
+
+                    plantios.forEach(plantio => {
+                        const row = listaPlantiosBody.insertRow();
+                        
+                        let cell = row.insertCell();
+                        cell.textContent = contador++;
+                        cell.setAttribute('data-label', 'Código');
+                        
+                        cell = row.insertCell();
+                        cell.textContent = plantio.Variedade || plantio.variedade;
+                        cell.setAttribute('data-label', 'Variedade');
+
+                        cell = row.insertCell();
+                        cell.textContent = plantio.Quantidade_Plantada || plantio.quantidade;
+                        cell.setAttribute('data-label', 'Quantidade');
+                        
+                        const dataPlantioString = plantio.Data_Plantio || plantio.data_plantio;
+                        let dataFormatada = 'Invalid Date';
+                        
+                        if (dataPlantioString) {
+                            try {
+                                dataFormatada = new Date(dataPlantioString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                            } catch (e) {
+                                dataFormatada = dataPlantioString.split('T')[0];
+                            }
+                        }
+                        
+                        cell = row.insertCell();
+                        cell.textContent = dataFormatada;
+                        cell.setAttribute('data-label', 'Data do Plantio');
+
+                        cell = row.insertCell();
+                        cell.textContent = plantio.Localizacao || plantio.localizacao;
+                        cell.setAttribute('data-label', 'Localização');
+                    });
+                } else {
+                    alert('Erro ao carregar plantios.');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar plantios:', error);
+                alert('Erro ao conectar com o servidor para carregar plantios.');
+            }
+        }   
+
+        document.addEventListener('DOMContentLoaded', carregarPlantios);
+    </script>
+</body>
+</html>

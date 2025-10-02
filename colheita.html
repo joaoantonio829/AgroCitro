@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroCitro - Colheita</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="Voltar">Voltar</a>
+        <div class="form-section">
+            <h2>Registrar Colheita</h2>
+            <div class="form-group">
+                <label for="dataColheita">Data da Colheita</label>
+                <input type="date" id="dataColheita" value="2025-01-01">
+            </div>
+            <div class="form-group">
+                <label for="quantidadeColhida">Quantidade Colhida (kg)</label>
+                <input type="number" id="quantidadeColhida" placeholder="Ex: 500">
+            </div>
+            <div class="form-group">
+                <label for="qualidade">Qualidade</label>
+                <input type="text" id="qualidade" placeholder="Ex: Ótima, Regular, Boa">
+            </div>
+            
+            <button id="btnRegistrarColheita" class="btn btn-primary">Registrar Colheita</button>
+        </div>
+
+        <div class="list-section">
+            <h2>Lista de Colheitas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Data</th>
+                        <th>Quantidade (kg)</th>
+                        <th>Qualidade</th>
+                    </tr>
+                </thead>
+                <tbody id="listaColheitas">
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        async function carregarColheitas() {
+            try {
+                const response = await fetch('/colheita');
+                if (response.ok) {
+                    const colheitas = await response.json();
+                    const listaColheitasBody = document.getElementById('listaColheitas');
+                    listaColheitasBody.innerHTML = '';
+
+                    let contador = 1;
+
+                    colheitas.forEach(colheita => {
+                        const row = listaColheitasBody.insertRow();
+
+                        let cell = row.insertCell();
+                        cell.textContent = contador++;
+                        cell.setAttribute('data-label', 'Código');
+                        
+                        const dataColheitaString = colheita.Data_Colheita || colheita.data_colheita;
+                        let dataFormatada = 'Invalid Date';
+                        
+                        if (dataColheitaString) {
+                            try {
+                                dataFormatada = new Date(dataColheitaString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                            } catch (e) {
+                                dataFormatada = dataColheitaString.split('T')[0];
+                            }
+                        }
+                        
+                        cell = row.insertCell();
+                        cell.textContent = dataFormatada;
+                        cell.setAttribute('data-label', 'Data da Colheita');
+
+                        cell = row.insertCell();
+                        cell.textContent = colheita.Quantidade_Colhida || colheita.quantidade_colhida;
+                        cell.setAttribute('data-label', 'Quantidade (kg)');
+
+                        cell = row.insertCell();
+                        cell.textContent = colheita.Qualidade || colheita.qualidade;
+                        cell.setAttribute('data-label', 'Qualidade');
+                    });
+                } else {
+                    alert('Erro ao carregar colheitas.');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar colheitas:', error);
+                alert('Erro ao conectar com o servidor para carregar colheitas.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarColheitas);
+
+        document.getElementById('btnRegistrarColheita').addEventListener('click', async () => {
+            const dataColheita = document.getElementById('dataColheita').value;
+            const quantidadeColhida = document.getElementById('quantidadeColhida').value;
+            const qualidade = document.getElementById('qualidade').value;
+
+            const payload = { 
+                Data_Colheita: dataColheita, 
+                Quantidade_Colhida: quantidadeColhida, 
+                Qualidade: qualidade
+            };
+
+            try {
+                const response = await fetch('/adicionar-colheita', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Colheita registrada com sucesso!');
+                    carregarColheitas();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao registrar colheita: ${errorData.msg || 'Detalhes desconhecidos.'}`);
+                }
+            } catch (error) {
+                console.error('Erro de rede ou servidor:', error);
+                alert('Erro ao conectar com o servidor.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', carregarColheitas);
+    </script>
+</body>
+</html>

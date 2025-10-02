@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total de Plantas</title>
+    <link rel="stylesheet" href="styleTotal.css">
+</head>
+<body>
+    <a href="index.html" class="Voltar">Voltar</a>
+    <div class="total-container">
+        <h1>Plantio<span>mudas</span></h1>
+        
+        <p class="total-label">Total</p>
+        <p class="total-number" id="totalPlantas">0</p>
+        
+        <svg class="leaf-icon" viewBox="0 0 24 24" fill="none" stroke="#228B22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20H3L10 2L17 20H9C9 16 11 15 11 13C11 11 9 10 9 6"/>
+        </svg>
+
+        <p class="last-update" id="ultimaAtualizacao">Última atualização: --/--/---- --:--</p>
+    </div>
+
+    <script src="script.js"></script>
+<script>
+    async function carregarTotalPlantas() {
+        try {
+            const response = await fetch('/plantas'); 
+            
+            if (response.ok) {
+                const data = await response.json();
+
+                document.getElementById('totalPlantas').textContent = data.total_plantas || 0;
+
+                const now = new Date();
+                const options = {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+                const ultimaAtualizacao = now.toLocaleDateString('pt-BR', options).replace(',', '');
+                document.getElementById('ultimaAtualizacao').textContent = `Última atualização: ${ultimaAtualizacao}`;
+
+            } else {
+                document.getElementById('totalPlantas').textContent = 'Erro';
+                document.getElementById('ultimaAtualizacao').textContent = 'Erro ao carregar dados.';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar total de plantas:', error);
+            document.getElementById('totalPlantas').textContent = 'Erro';
+            document.getElementById('ultimaAtualizacao').textContent = 'Erro de conexão.';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', carregarTotalPlantas);
+</script>
+</body>
+</html>

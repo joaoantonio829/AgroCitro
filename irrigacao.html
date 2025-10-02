@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroCitro - Irrigação</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="Voltar">Voltar</a>
+        <div class="form-section">
+            <h2>Agendar Irrigação</h2>
+            <div class="form-group">
+                <label for="horarioInicial">Horário Inicial</label>
+                <input type="time" id="horarioInicial" value="06:00">
+            </div>
+            <div class="form-group">
+                <label for="horarioFinal">Horário Final</label>
+                <input type="time" id="horarioFinal" value="08:00">
+            </div>
+            
+            <button id="btnAgendarIrrigacao" class="btn btn-primary">Agendar</button>
+        </div>
+
+        <div class="list-section">
+            <h2>Lista de Agendamentos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Horário Inicial</th>
+                        <th>Horário Final</th>
+                    </tr>
+                </thead>
+                <tbody id="listaIrrigacoes">
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        async function carregarIrrigacoes() {
+            try {
+                const response = await fetch('/irrigacao');
+                if (response.ok) {
+                    const irrigacoes = await response.json();
+                    const listaIrrigacoesBody = document.getElementById('listaIrrigacoes');
+                    listaIrrigacoesBody.innerHTML = '';
+
+                    let contador = 1;
+
+                    irrigacoes.forEach(irrigacao => {
+                        const row = listaIrrigacoesBody.insertRow();
+
+                        let cell = row.insertCell();
+                        cell.textContent = contador++;
+                        cell.setAttribute('data-label', 'Código');
+
+                        cell = row.insertCell();
+                        cell.textContent = irrigacao.Horario_Inicial || irrigacao.horario_inicial;
+                        cell.setAttribute('data-label', 'Horário Inicial');
+                        
+                        cell = row.insertCell();
+                        cell.textContent = irrigacao.Horario_Final || irrigacao.horario_final;
+                        cell.setAttribute('data-label', 'Horário Final');
+                    });
+                } else {
+                    alert('Erro ao carregar agendamentos de irrigação.');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos de irrigação:', error);
+                alert('Erro ao conectar com o servidor para carregar agendamentos.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarIrrigacoes);
+
+        document.getElementById('btnAgendarIrrigacao').addEventListener('click', async () => {
+            const horarioInicial = document.getElementById('horarioInicial').value;
+            const horarioFinal = document.getElementById('horarioFinal').value;
+
+            const payload = { 
+                Horario_Inicial: horarioInicial, 
+                Horario_Final: horarioFinal 
+            };
+
+            try {
+                const response = await fetch('/adicionar-irrigacao', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Agendamento de irrigação registrado com sucesso!');
+                    carregarIrrigacoes();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao registrar irrigação: ${errorData.msg || 'Detalhes desconhecidos.'}`);
+                }
+            } catch (error) {
+                console.error('Erro de rede ou servidor:', error);
+                alert('Erro ao conectar com o servidor.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', carregarIrrigacoes);
+    </script>
+</body>
+</html>
